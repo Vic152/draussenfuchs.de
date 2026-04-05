@@ -55,24 +55,23 @@ to go back into bootloader mode to re-flash/update the board.
 
 */
 // Settings
-#define BEACON_TYPE 2               // Defines which beacon is setup on the transmitter
-                                    // 0 = Finish beacon - MO - continues
-                                    // 1 = First minute - MOE
-                                    // 2 = Second minute - MOI
-                                    // 3 = Third minute - MOS
-                                    // 4 = Fourth minute - MOH
-                                    // 5 = Fith minute - MO5
-                                    // Any other number will result in error code UUU being emmited
+#define BEACON_TYPE 0  // Defines which beacon is setup on the transmitter \
+                       // 0 = Finish beacon - MO - continues \
+                       // 1 = First minute - MOE \
+                       // 2 = Second minute - MOI \
+                       // 3 = Third minute - MOS \
+                       // 4 = Fourth minute - MOH \
+                       // 5 = Fith minute - MO5 \
+                       // Any other number will result in error code UUU being emmited
 
 
-#define FREQ_HZ 494  // Tone frequency of the fox. For reference: c-major-scale: 440 494 523 587 659 698 784 880 988 1047
-#define WPM_SPEED 10                  // Words per minute speed
-#define TIME_TO_NEXT_TRANSMIT 240000  // Time between beacon activations - 240000 = 4 minutes
-#define BEACON_DURATION 60000         // How long will the beacon be active - 60000 = 1 minute
+#define FREQ_HZ 494                  // Tone frequency of the fox. For reference: c-major-scale: 440 494 523 587 659 698 784 880 988 1047
+#define WPM_SPEED 10                 // Words per minute speed
+#define TIME_TO_NEXT_TRANSMIT 30000  // Time between beacon activations - 240000 = 4 minutes
+#define BEACON_DURATION 60000        // How long will the beacon be active - 60000 = 1 minute
 // End of settings
 
-
-#define BASE_DOT_TIME 1200          // Dot time for 1 word per minute
+#define BASE_DOT_TIME 1200  // Dot time for 1 word per minute
 
 #define DATA_PIN 3               // Pin of the ESP32 connected to the data pin of the transmitter module
 #define TX_ARTIFICIAL_VCC_PIN 4  // Pin of the ESP32 providing power to the transmitter module due to unused enable pin
@@ -374,12 +373,13 @@ RTC_DATA_ATTR bool was_delayed = false;
 void transmit_beacon() {
 
   int beacon_delay = 0;
-  char beacon_code[500];
+  char beacon_code[32];
 
   switch (BEACON_TYPE) {
     case 0:
       beacon_delay = 0;
       strcpy(beacon_code, "MO");
+      break;
     case 1:
       beacon_delay = 0;
       strcpy(beacon_code, "MOE");
@@ -411,11 +411,11 @@ void transmit_beacon() {
   int space = space_time();
 
   if (BEACON_TYPE == 0) {
+    if (!was_delayed) {
+      delay(beacon_delay);
+      was_delayed = true;
+    }
     while (true) {
-      if (!was_delayed) {
-        delay(beacon_delay);
-        was_delayed = true;
-      }
       send_letters(beacon_code);
       delay(space);
     }
@@ -427,15 +427,16 @@ void transmit_beacon() {
     unsigned long startTime = millis();
     const unsigned long totalDuration = BEACON_DURATION;
 
+    if (!was_delayed) {
+      delay(beacon_delay);
+      was_delayed = true;
+    }
+
     // The Arduino is trapped inside this while loop for exactly 60 seconds
     while (millis() - startTime <= totalDuration) {
 
       // Because there is no interval check, this function fires
       // continuously and aggressively as fast as the chip can process it.
-      if (!was_delayed) {
-        delay(beacon_delay);
-        was_delayed = true;
-      }
       send_letters(beacon_code);
       delay(space);
     }
@@ -444,7 +445,6 @@ void transmit_beacon() {
     hasRun = true;  // Set the flag to true so it doesn't run again
   }
 }
-
 
 void setup() {
   // set pin modes
