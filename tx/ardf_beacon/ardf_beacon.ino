@@ -72,7 +72,7 @@ Any other number will result in error code UUU being emmited
 #define WPM_SPEED 10                     // Words per minute speed
 #define TIME_TO_NEXT_TRANSMIT 240000000  // Time between beacon activations - 240000 = 4 minutes
 #define BEACON_DURATION 60000000         // How long will the beacon be active - 60000 = 1 minute
-#define TIMING_TRIM 
+#define TIMING_TRIM 1400000
 // End of settings
 
 #define BASE_DOT_TIME 1200  // Dot time for 1 word per minute
@@ -452,8 +452,6 @@ static void sleep_us(long us) {
   esp_sleep_enable_timer_wakeup(us);
   esp_deep_sleep_start();
 }
-
-
 
 void setup() {
 
