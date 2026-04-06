@@ -68,6 +68,10 @@ Any other number will result in error code UUU being emmited
 */
 
 
+#define FREQ_HZ 440                   // Tone frequency of the fox. For reference: c-major-scale: 440 494 523 587 659 698 784 880 988 1047
+#define WPM_SPEED 10                  // Words per minute speed
+#define TIME_TO_NEXT_TRANSMIT 240000  // Time between beacon activations - 240000 = 4 minutes
+#define BEACON_DURATION 60000         // How long will the beacon be active - 60000 = 1 minute
 // End of settings
 
 #define BASE_DOT_TIME 1200  // Dot time for 1 word per minute
