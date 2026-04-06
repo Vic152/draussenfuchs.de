@@ -55,20 +55,19 @@ to go back into bootloader mode to re-flash/update the board.
 
 */
 // Settings
-#define BEACON_TYPE 0  // Defines which beacon is setup on the transmitter \
-                       // 0 = Finish beacon - MO - continues \
-                       // 1 = First minute - MOE \
-                       // 2 = Second minute - MOI \
-                       // 3 = Third minute - MOS \
-                       // 4 = Fourth minute - MOH \
-                       // 5 = Fith minute - MO5 \
-                       // Any other number will result in error code UUU being emmited
+#define BEACON_TYPE 1
+/*
+Defines which beacon is setup on the transmitter
+0 = Finish beacon - MO - continues
+1 = First minute - MOE
+2 = Second minute - MOI
+3 = Third minute - MOS
+4 = Fourth minute - MOH
+5 = Fith minute - MO5
+Any other number will result in error code UUU being emmited
+*/
 
 
-#define FREQ_HZ 494                  // Tone frequency of the fox. For reference: c-major-scale: 440 494 523 587 659 698 784 880 988 1047
-#define WPM_SPEED 10                 // Words per minute speed
-#define TIME_TO_NEXT_TRANSMIT 30000  // Time between beacon activations - 240000 = 4 minutes
-#define BEACON_DURATION 60000        // How long will the beacon be active - 60000 = 1 minute
 // End of settings
 
 #define BASE_DOT_TIME 1200  // Dot time for 1 word per minute
