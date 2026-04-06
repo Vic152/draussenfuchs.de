@@ -447,16 +447,23 @@ void transmit_beacon() {
 }
 
 void setup() {
+
   // set pin modes
   pinMode(TX_ARTIFICIAL_VCC_PIN, OUTPUT);
   pinMode(DATA_PIN, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
 
-  // set wakeup timer
-  esp_sleep_enable_timer_wakeup(TIME_TO_NEXT_TRANSMIT * uS_TO_MS_FACTOR);
+  unsigned long expected_cycle_time = TIME_TO_NEXT_TRANSMIT + BEACON_DURATION;
 
   transmit_beacon();
 
+  unsigned long time_spent_awake = millis();
+
+  // Calculate sleep time to reach the END of the current cycle
+  long delta = expected_cycle_time - time_spent_awake;
+
+  // set wakeup timer
+  esp_sleep_enable_timer_wakeup(delta * uS_TO_MS_FACTOR);
   esp_deep_sleep_start();
 }
 
