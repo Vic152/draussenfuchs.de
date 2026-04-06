@@ -68,10 +68,11 @@ Any other number will result in error code UUU being emmited
 */
 
 
-#define FREQ_HZ 440                   // Tone frequency of the fox. For reference: c-major-scale: 440 494 523 587 659 698 784 880 988 1047
-#define WPM_SPEED 10                  // Words per minute speed
-#define TIME_TO_NEXT_TRANSMIT 240000  // Time between beacon activations - 240000 = 4 minutes
-#define BEACON_DURATION 60000         // How long will the beacon be active - 60000 = 1 minute
+#define FREQ_HZ 440                      // Tone frequency of the fox. For reference: c-major-scale: 440 494 523 587 659 698 784 880 988 1047
+#define WPM_SPEED 10                     // Words per minute speed
+#define TIME_TO_NEXT_TRANSMIT 240000000  // Time between beacon activations - 240000 = 4 minutes
+#define BEACON_DURATION 60000000         // How long will the beacon be active - 60000 = 1 minute
+#define TIMING_TRIM 
 // End of settings
 
 #define BASE_DOT_TIME 1200  // Dot time for 1 word per minute
@@ -79,7 +80,7 @@ Any other number will result in error code UUU being emmited
 #define DATA_PIN 3               // Pin of the ESP32 connected to the data pin of the transmitter module
 #define TX_ARTIFICIAL_VCC_PIN 4  // Pin of the ESP32 providing power to the transmitter module due to unused enable pin
 
-#define uS_TO_MS_FACTOR 1000  // Conversion factor for micro seconds to ms
+#define ms_TO_us_FACTOR 1000  // Conversion factor for micro seconds to ms
 
 // Calculate dot time based on speed
 int dot_time() {
@@ -344,7 +345,6 @@ void send_letter(char letter) {
       delay(space);
       break;
 
-
     // --- UNKNOWN CHARACTERS ---
     default:
       dot();
@@ -427,7 +427,6 @@ void transmit_beacon() {
   // Only execute this block if it hasn't run yet
   if (!hasRun) {
 
-    unsigned long startTime = millis();
     const unsigned long totalDuration = BEACON_DURATION;
 
     if (!was_delayed) {
@@ -435,19 +434,26 @@ void transmit_beacon() {
       was_delayed = true;
     }
 
+    unsigned long startTime = micros();
     // The Arduino is trapped inside this while loop for exactly 60 seconds
-    while (millis() - startTime <= totalDuration) {
+    while (micros() - startTime <= totalDuration) {
 
       // Because there is no interval check, this function fires
       // continuously and aggressively as fast as the chip can process it.
       send_letters(beacon_code);
       delay(space);
     }
-
     // This code only runs after the 60 seconds have completely finished
     hasRun = true;  // Set the flag to true so it doesn't run again
   }
 }
+
+static void sleep_us(long us) {
+  esp_sleep_enable_timer_wakeup(us);
+  esp_deep_sleep_start();
+}
+
+
 
 void setup() {
 
@@ -456,18 +462,17 @@ void setup() {
   pinMode(DATA_PIN, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
 
-  unsigned long expected_cycle_time = TIME_TO_NEXT_TRANSMIT + BEACON_DURATION;
+  const long interval_us = TIME_TO_NEXT_TRANSMIT + BEACON_DURATION + TIMING_TRIM;
 
-  transmit_beacon();
-
-  unsigned long time_spent_awake = millis();
-
-  // Calculate sleep time to reach the END of the current cycle
-  long delta = expected_cycle_time - time_spent_awake;
-
-  // set wakeup timer
-  esp_sleep_enable_timer_wakeup(delta * uS_TO_MS_FACTOR);
-  esp_deep_sleep_start();
+  long start = micros();
+  for (;;) {
+    transmit_beacon();
+    long now = micros();
+    const long time_vs_start = now - start;
+    const long time_taken_this_cycle = time_vs_start % interval_us;
+    const long time_remaining_this_cycle = interval_us - time_taken_this_cycle;
+    sleep_us(time_remaining_this_cycle);
+  }
 }
 
 void loop() {
