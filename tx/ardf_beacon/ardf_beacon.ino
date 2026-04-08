@@ -68,11 +68,11 @@ Any other number will result in error code UUU being emmited
 */
 
 
-#define FREQ_HZ 440                      // Tone frequency of the fox. For reference: c-major-scale: 440 494 523 587 659 698 784 880 988 1047
+#define FREQ_HZ 528                      // Tone frequency of the fox. For reference: c-major-scale: 440 494 523 587 659 698 784 880 988 1047
 #define WPM_SPEED 10                     // Words per minute speed
 #define TIME_TO_NEXT_TRANSMIT 240000000  // Time between beacon activations - 240000 = 4 minutes
 #define BEACON_DURATION 60000000         // How long will the beacon be active - 60000 = 1 minute
-#define TIMING_TRIM 1400000
+#define TIMING_TRIM 1433952
 // End of settings
 
 #define BASE_DOT_TIME 1200  // Dot time for 1 word per minute
@@ -373,6 +373,8 @@ void send_letters(const char* letters) {
 // But during Deep Sleep, it will remember its last state.
 RTC_DATA_ATTR bool was_delayed = false;
 
+// 
+
 void transmit_beacon() {
 
   int beacon_delay = 0;
@@ -418,6 +420,7 @@ void transmit_beacon() {
       delay(beacon_delay);
       was_delayed = true;
     }
+    // "MO" beacon just loops forever
     while (true) {
       send_letters(beacon_code);
       delay(space);
@@ -427,7 +430,7 @@ void transmit_beacon() {
   // Only execute this block if it hasn't run yet
   if (!hasRun) {
 
-    const unsigned long totalDuration = BEACON_DURATION;
+    const unsigned long totalDuration = BEACON_DURATION; 
 
     if (!was_delayed) {
       delay(beacon_delay);
@@ -435,16 +438,59 @@ void transmit_beacon() {
     }
 
     unsigned long startTime = micros();
-    // The Arduino is trapped inside this while loop for exactly 60 seconds
-    while (micros() - startTime <= totalDuration) {
+    unsigned long singleTxDuration = 0;
+    bool firstRun = true;
 
-      // Because there is no interval check, this function fires
-      // continuously and aggressively as fast as the chip can process it.
+    // --- 1. THE MORSE CODE LOOP ---
+    while (true) {
+      unsigned long elapsed = micros() - startTime;
+      
+      // Look-ahead: Is there enough time for another Morse sequence?
+      if (!firstRun) {
+        if ((totalDuration - elapsed) < singleTxDuration) {
+          break; // Not enough time! Exit the Morse loop.
+        }
+      }
+
+      unsigned long txStart = micros(); 
+      
       send_letters(beacon_code);
       delay(space);
+      
+      if (firstRun) {
+        singleTxDuration = micros() - txStart;
+        firstRun = false;
+      }
     }
-    // This code only runs after the 60 seconds have completely finished
-    hasRun = true;  // Set the flag to true so it doesn't run again
+
+    // --- 2. THE CONTINUOUS TONE PADDING PHASE ---
+    unsigned long finalElapsed = micros() - startTime;
+    
+    if (totalDuration > finalElapsed) {
+      unsigned long padding_us = totalDuration - finalElapsed;
+      
+      // 1. Turn the Transmitter and Tone ON
+      digitalWrite(TX_ARTIFICIAL_VCC_PIN, HIGH);  
+      digitalWrite(LED_BUILTIN, LOW);             
+      tone(DATA_PIN, FREQ_HZ);                    
+      
+      // 2. Wait out the bulk of the time
+      if (padding_us > 2000) {
+        delay(padding_us / 1000); 
+      }
+      
+      // 3. Busy-wait the final microseconds to hit 60.000 seconds perfectly
+      while (micros() - startTime < totalDuration) {
+        // The ESP32 is trapped here, keeping the tone playing
+      }
+
+      // 4. Time is up! Turn the Transmitter and Tone OFF
+      noTone(DATA_PIN); 
+      digitalWrite(LED_BUILTIN, HIGH); 
+      digitalWrite(TX_ARTIFICIAL_VCC_PIN, LOW);
+    }
+
+    hasRun = true;  
   }
 }
 
