@@ -137,7 +137,6 @@ void transmit_beacon(const char* beacon_code) {
   }
 
   // --- PHASE 2: CONTINUOUS TONE PADDING ---
-  // --- PHASE 2: CONTINUOUS TONE PADDING ---
   unsigned long finalElapsed = micros() - startTime;
   if (BEACON_DURATION_US > finalElapsed) {
     unsigned long padding_us = BEACON_DURATION_US - finalElapsed;
