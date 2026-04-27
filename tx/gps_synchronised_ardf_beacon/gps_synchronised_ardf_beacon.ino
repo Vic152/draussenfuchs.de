@@ -1,7 +1,7 @@
 /*
   GPS-Synchronized 5-Fox ARDF Beacon
   Platform: ESP32-C3 Super Mini
-  Hardware: NEO-M8N GPS (at 115200 baud, powered continuously)
+  Hardware: NEO-M8N GPS (at 9600 baud, powered continuously)
 */
 
 #include <TinyGPSPlus.h>
@@ -17,7 +17,7 @@
 // 2. TIMING & HARDWARE CONSTANTS
 // ==============================================================================
 #define BEACON_PERIOD_MS 300000ULL      // 5 minutes (300,000 ms) total rotation cycle
-#define BEACON_DURATION_US 60000000ULL  // 60 seconds perfectly padded transmission
+#define BEACON_DURATION_US 59800000ULL  // less than 60 seconds perfectly padded transmission
 #define WPM 10                          // Morse speed (words per minute)
 #define DIT_DURATION_MS (1200 / WPM)    // Standard timing math
 #define FREQ_HZ 450                    // Pitch of the tone
