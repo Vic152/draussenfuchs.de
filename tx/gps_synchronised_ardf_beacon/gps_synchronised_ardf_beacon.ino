@@ -17,8 +17,8 @@
 // 2. TIMING & HARDWARE CONSTANTS
 // ==============================================================================
 #define BEACON_PERIOD_MS 300000ULL      // 5 minutes (300,000 ms) total rotation cycle
-#define BEACON_DURATION_US 59800000ULL  // less than 60 seconds perfectly padded transmission
-#define WPM 10                          // Morse speed (words per minute)
+#define BEACON_DURATION_US 59750000ULL  // less than 60 seconds perfectly padded transmission
+#define WPM 12                          // Morse speed (words per minute)
 #define DIT_DURATION_MS (1200 / WPM)    // Standard timing math
 #define FREQ_HZ 450                    // Pitch of the tone
 
